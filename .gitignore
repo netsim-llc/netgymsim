@@ -1,0 +1,8 @@
+build/*
+cmake-cache/*
+.lock-ns3_linux_build
+.vscode/settings.json
+*.pyc
+*.csv
+*.json
+*ns3db-v01/*

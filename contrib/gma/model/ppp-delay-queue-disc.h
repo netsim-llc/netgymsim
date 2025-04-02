@@ -1,0 +1,66 @@
+/* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
+/*
+ * Copyright (c) 2017 Universita' degli Studi di Napoli Federico II
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * Authors:  Stefano Avallone <stavallo@unina.it>
+ */
+
+#ifndef PPP_DELAY_QUEUE_DISC_H
+#define PPP_DELAY_QUEUE_DISC_H
+
+#include "ns3/queue-disc.h"
+#include "ns3/ppp-tag.h"
+
+namespace ns3 {
+/**
+ * \ingroup traffic-control
+ *
+ * Simple queue disc implementing the PPP (First-In First-Out) policy.
+ *
+ */
+class PppDelayQueueDisc : public QueueDisc {
+public:
+  /**
+   * \brief Get the type ID.
+   * \return the object TypeId
+   */
+  static TypeId GetTypeId (void);
+  /**
+   * \brief PppDelayQueueDisc constructor
+   *
+   * Creates a queue with a depth of 1000 packets by default
+   */
+  PppDelayQueueDisc ();
+
+  virtual ~PppDelayQueueDisc();
+
+  // Reasons for dropping packets
+  static constexpr const char* LIMIT_EXCEEDED_DROP = "Queue disc limit exceeded";  //!< Packet dropped due to queue disc limit exceeded
+
+private:
+  virtual bool DoEnqueue (Ptr<QueueDiscItem> item);
+  virtual Ptr<QueueDiscItem> DoDequeue (void);
+  virtual Ptr<const QueueDiscItem> DoPeek (void);
+  virtual bool CheckConfig (void);
+  virtual void InitializeParams (void);
+  uint32_t GetWeightedDelayLimit (uint8_t ppp, uint8_t L);
+  static const uint8_t m_level = 5; //the level of priority, [0, 1, 2, 3 ,4]
+  static const uint32_t m_delayLimit = 35; //uint ms
+};
+
+} // namespace ns3
+
+#endif /* PPP_DELAY_QUEUE_DISC_H */

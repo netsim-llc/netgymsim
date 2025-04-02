@@ -1,0 +1,424 @@
+/******************************************************************************
+ * Copyright 2016-2017 cisco Systems, Inc.                                    *
+ *                                                                            *
+ * Licensed under the Apache License, Version 2.0 (the "License");            *
+ * you may not use this file except in compliance with the License.           *
+ * You may obtain a copy of the License at                                    *
+ *                                                                            *
+ *     http://www.apache.org/licenses/LICENSE-2.0                             *
+ *                                                                            *
+ * Unless required by applicable law or agreed to in writing, software        *
+ * distributed under the License is distributed on an "AS IS" BASIS,          *
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   *
+ * See the License for the specific language governing permissions and        *
+ * limitations under the License.                                             *
+ ******************************************************************************/
+
+/**
+ * @file
+ * Simple example demonstrating the usage of the rmcat ns3 module, using:
+ *  - NADA as controller for rmcat flows
+ *  - Statistics-based traffic source as codec
+ *  - [Optionally] TCP flows
+ *  - [Optionally] UDP flows
+ *
+ * @version 0.1.1
+ * @author Jiantao Fu
+ * @author Sergio Mena
+ * @author Xiaoqing Zhu
+ */
+
+#include "ns3/nada-controller.h"
+#include "ns3/rmcat-sender.h"
+#include "ns3/rmcat-receiver.h"
+#include "ns3/rmcat-constants.h"
+#include "ns3/point-to-point-helper.h"
+#include "ns3/data-rate.h"
+#include "ns3/bulk-send-helper.h"
+#include "ns3/packet-sink-helper.h"
+#include "ns3/udp-client-server-helper.h"
+#include "ns3/internet-stack-helper.h"
+#include "ns3/traffic-control-helper.h"
+#include "ns3/ipv4-address-helper.h"
+#include "ns3/core-module.h"
+#include "ns3/point-to-point-net-device.h"
+#include "ns3/fq-ppp-queue-disc.h"
+#include "ns3/networkgym-module.h"
+
+using json = nlohmann::json;
+
+const uint32_t RMCAT_DEFAULT_RMIN  =  150000;  // in bps: 150Kbps
+const uint32_t RMCAT_DEFAULT_RMAX  = 1500000;  // in bps: 1.5Mbps
+const uint32_t RMCAT_DEFAULT_RINIT =  150000;  // in bps: 150Kbps
+
+const uint32_t TOPO_DEFAULT_BW     = 1000000;    // in bps: 1Mbps
+const uint32_t TOPO_DEFAULT_PDELAY =      10;    // in ms:   50ms
+const uint32_t TOPO_DEFAULT_QDELAY =     300;    // in ms:  300ms
+const uint32_t TOPO_RATE_CHANGE_INTERVAL = 1000; // in ms: 1000 ms
+
+std::string g_trace = "";
+std::ifstream g_ifTraceFile;
+
+using namespace ns3;
+
+static void ChangeRate(NetDeviceContainer devices, uint64_t bps)
+{
+    double rate = 0;
+    std::string unit;
+    double ratescaler = 1;
+    g_ifTraceFile >> rate >> unit;
+
+    if(unit == ",Mbits/sec")
+    {
+        ratescaler = 1e6;
+    }
+    else if(unit == ",Kbits/sec")
+    {
+        ratescaler = 1e3;
+    }
+    else if(unit == ",bits/sec")
+    {
+        ratescaler = 1;
+    }
+    else
+    {
+        NS_FATAL_ERROR("wrong unit!!!!");
+    }
+    uint64_t newRate = std::max(rate*ratescaler, 1000.0);
+
+    std::cout << " rate:" << rate << " " << unit << std::endl;
+    //Ptr<UniformRandomVariable> x = CreateObject<UniformRandomVariable> ();
+    //x->SetAttribute ("Min", DoubleValue (0.2));
+    //x->SetAttribute ("Max", DoubleValue (1));
+    //uint64_t newRate = bps*x->GetValue ();
+    devices.Get(0)->GetObject<PointToPointNetDevice>()->SetDataRate(DataRate (newRate));
+    devices.Get(1)->GetObject<PointToPointNetDevice>()->SetDataRate(DataRate (newRate));
+    std::cout << Now().GetSeconds() << " change rate to:" << newRate << "\n";
+    Simulator::Schedule (MilliSeconds (TOPO_RATE_CHANGE_INTERVAL), &ChangeRate, devices, bps);
+}
+
+static NodeContainer BuildExampleTopo (uint64_t bps,
+                                       uint32_t msDelay,
+                                       uint32_t msQdelay)
+{
+    NodeContainer nodes;
+    nodes.Create (2);
+
+
+    PointToPointHelper pointToPoint;
+    pointToPoint.SetDeviceAttribute ("DataRate", DataRateValue  (DataRate (bps)));
+    pointToPoint.SetChannelAttribute ("Delay", TimeValue (MilliSeconds (msDelay)));
+    //auto bufSize = std::max<uint32_t> (DEFAULT_PACKET_SIZE, bps * msQdelay / 8000);
+    uint32_t bufSize = 1500;
+    //pointToPoint.SetQueue ("ns3::DropTailQueue",
+    //                       "Mode", StringValue ("QUEUE_MODE_BYTES"),
+    //                       "MaxBytes", UintegerValue (bufSize));
+    auto bufSizeString = std::to_string(bufSize) + "B";
+    pointToPoint.SetQueue ("ns3::DropTailQueue",
+                           "MaxSize", StringValue (bufSizeString));
+    
+
+    NetDeviceContainer devices = pointToPoint.Install (nodes);
+
+    InternetStackHelper stack;
+    stack.Install (nodes);
+
+    TrafficControlHelper tch;
+    tch.SetRootQueueDisc ("ns3::FqPppQueueDisc");
+    QueueDiscContainer qdiscs = tch.Install (devices);
+
+    Ipv4AddressHelper address;
+    address.SetBase ("10.1.1.0", "255.255.255.0");
+    address.Assign (devices);
+
+    // Uncomment to capture simulated traffic
+    // pointToPoint.EnablePcapAll ("rmcat-example");
+
+    // disable tc for now, some bug in ns3 causes extra delay
+    //TrafficControlHelper tch;
+    //tch.Uninstall (devices);
+
+    std::string trace_path = "../../sample_trace/"+g_trace+".csv";
+    g_ifTraceFile.open (trace_path, std::ifstream::in);
+    if (!g_ifTraceFile.good ())
+    {
+        //NS_FATAL_ERROR("trace file not found !!!! " << trace_path);
+        std::cout << "trace file not found !!!! " << trace_path << std::endl;
+        return nodes;
+    }
+
+    for (int i = 0; i < 350; i++)
+    {
+        g_ifTraceFile.ignore(10000,'\n');
+    }
+
+    std::cout << "trace:" <<trace_path << std::endl;
+
+    Simulator::Schedule (MilliSeconds (0), &ChangeRate, devices, bps);
+    return nodes;
+}
+
+static void InstallTCP (Ptr<Node> sender,
+                        Ptr<Node> receiver,
+                        uint16_t port,
+                        float startTime,
+                        float stopTime)
+{
+    // configure TCP source/sender/client
+    auto serverAddr = receiver->GetObject<Ipv4> ()->GetAddress (1,0).GetLocal ();
+    BulkSendHelper source{"ns3::TcpSocketFactory",
+                           InetSocketAddress{serverAddr, port}};
+    // Set the amount of data to send in bytes. Zero is unlimited.
+    source.SetAttribute ("MaxBytes", UintegerValue (0));
+    source.SetAttribute ("SendSize", UintegerValue (DEFAULT_PACKET_SIZE));
+
+    auto clientApps = source.Install (sender);
+    clientApps.Start (Seconds (startTime));
+    clientApps.Stop (Seconds (stopTime));
+
+    // configure TCP sink/receiver/server
+    PacketSinkHelper sink{"ns3::TcpSocketFactory",
+                           InetSocketAddress{Ipv4Address::GetAny (), port}};
+    auto serverApps = sink.Install (receiver);
+    serverApps.Start (Seconds (startTime));
+    serverApps.Stop (Seconds (stopTime));
+
+}
+
+static Time GetIntervalFromBitrate (uint64_t bitrate, uint32_t packetSize)
+{
+    if (bitrate == 0u) {
+        return Time::Max ();
+    }
+    const auto secs = static_cast<double> (packetSize + IPV4_UDP_OVERHEAD) /
+                            (static_cast<double> (bitrate) / 8. );
+    return Seconds (secs);
+}
+
+static void InstallUDP (Ptr<Node> sender,
+                        Ptr<Node> receiver,
+                        uint16_t serverPort,
+                        uint64_t bitrate,
+                        uint32_t packetSize,
+                        uint32_t startTime,
+                        uint32_t stopTime)
+{
+    // configure UDP source/sender/client
+    auto serverAddr = receiver->GetObject<Ipv4> ()->GetAddress (1,0).GetLocal ();
+    const auto interPacketInterval = GetIntervalFromBitrate (bitrate, packetSize);
+    uint32_t maxPacketCount = 0XFFFFFFFF;
+    UdpClientHelper client{serverAddr, serverPort};
+    client.SetAttribute ("MaxPackets", UintegerValue (maxPacketCount));
+    client.SetAttribute ("Interval", TimeValue (interPacketInterval));
+    client.SetAttribute ("PacketSize", UintegerValue (packetSize));
+
+    auto clientApps = client.Install (sender);
+    clientApps.Start (Seconds (startTime));
+    clientApps.Stop (Seconds (stopTime));
+
+    // configure TCP sink/receiver/server
+    UdpServerHelper server{serverPort};
+    auto serverApps = server.Install (receiver);
+    serverApps.Start (Seconds (startTime));
+    serverApps.Stop (Seconds (stopTime));
+}
+
+static void InstallApps (bool nada,
+                         Ptr<DataProcessor> dataProcessor,
+                         Ptr<Node> sender,
+                         Ptr<Node> receiver,
+                         uint16_t port,
+                         float initBw,
+                         float minBw,
+                         float maxBw,
+                         float startTime,
+                         float stopTime,
+                         uint64_t id)
+{
+    Ptr<RmcatSender> sendApp = CreateObject<RmcatSender> ();
+    Ptr<RmcatReceiver> recvApp = CreateObject<RmcatReceiver> ();
+    sender->AddApplication (sendApp);
+    receiver->AddApplication (recvApp);
+    auto nadaController = std::make_shared<rmcat::NadaController> ();
+    nadaController->SetNetworkStatsCallback (id, MakeCallback (&ns3::DataProcessor::AppendMeasurement, dataProcessor));
+    dataProcessor->SetNetworkGymActionCallback("rmcat::srate", id, MakeCallback (&rmcat::NadaController::ReceiveNetworkGymAction, nadaController));
+    if (nada) {
+        sendApp->SetController (nadaController);
+    }
+    Ptr<Ipv4> ipv4 = receiver->GetObject<Ipv4> ();
+    Ipv4Address receiverIp = ipv4->GetAddress (1, 0).GetLocal ();
+    sendApp->Setup (receiverIp, port); // initBw, minBw, maxBw);
+
+    //const auto fps = 25.;
+    //auto innerCodec = new syncodecs::StatisticsCodec{fps, 0.1, 0.1, 0.2};
+    const auto fps = 60.;
+    auto innerCodec = new syncodecs::FixPatternCodec{fps, 1.0, 0.1, 8, 100, 2.4};
+    auto codec = new syncodecs::ShapedPacketizer{innerCodec, DEFAULT_PACKET_SIZE};
+    sendApp->SetCodec (std::shared_ptr<syncodecs::Codec>{codec});
+    recvApp->Setup (port);
+
+    sendApp->SetStartTime (Seconds (startTime));
+    sendApp->SetStopTime (Seconds (stopTime));
+
+    recvApp->SetStartTime (Seconds (startTime));
+    recvApp->SetStopTime (Seconds (stopTime));
+}
+
+int main (int argc, char *argv[])
+{
+
+    std::ifstream jsonStream("env-configure.json");
+    json jsonConfig;
+    jsonStream >> jsonConfig;
+
+    std::string env_name = jsonConfig["env"].get<std::string>();
+
+    std::cout << "env = " << env_name <<  "\n";
+
+    if(env_name.compare("rmcat") != 0)
+    {
+        NS_FATAL_ERROR("["+env_name+"] use case not implemented in rmcat-networkgym.cc");
+    }
+    float endTime = (float)jsonConfig["env_end_time_ms"].get<int>()/1000;
+    int nRmcat = jsonConfig["nada_flows"].get<int>();
+    if (nRmcat != 1)
+    {
+        NS_FATAL_ERROR("For single agent environment, we only support nada_flows = 1!");
+    }
+    int nTcp = jsonConfig["tcp_flows"].get<int>();
+    int nUdp = jsonConfig["udp_flows"].get<int>();
+    bool log = false;
+    bool nada = true;
+    std::string strArg  = "strArg default";
+    std::string queue = "/fifo";
+    int measurement_start_time_ms = jsonConfig["measurement_start_time_ms"].get<int>();
+
+    std::cout << "Config loaded from 'env-configure.json':"<< "\n"
+        << "measurement_start_time_ms = " << measurement_start_time_ms << "\n"
+        << "endTime_s = " << endTime <<  "\n"
+        << "nada_flows = " << nRmcat <<  "\n"
+        << "tcp_flows = " << nTcp <<  "\n"
+        << "udp_flows = " << nUdp <<  "\n";
+
+    CommandLine cmd;
+    cmd.AddValue ("rmcat", "Number of RMCAT (NADA) flows", nRmcat);
+    cmd.AddValue ("tcp", "Number of TCP flows", nTcp);
+    cmd.AddValue ("udp", "Number of UDP flows", nUdp);
+    cmd.AddValue ("log", "Turn on logs", log);
+    cmd.AddValue ("nada", "true: use NADA, false: use dummy", nada);
+    cmd.AddValue ("trace", "name of the trace", g_trace);
+    cmd.AddValue ("queue", "name of the queue", queue);
+
+    cmd.Parse (argc, argv);
+
+    if (log) {
+        LogComponentEnable ("RmcatSender", LOG_INFO);
+        LogComponentEnable ("RmcatReceiver", LOG_INFO);
+        LogComponentEnable ("Packet", LOG_FUNCTION);
+    }
+
+    if(queue == "/fifo" )
+    {
+        Config::SetDefault ("ns3::FqPppQueueDisc::Type", EnumValue (FqPppQueueDisc::Fifo));
+    }
+    else if(queue == "/red")
+    {
+        Config::SetDefault ("ns3::FqPppQueueDisc::Type", EnumValue (FqPppQueueDisc::Red));
+    }
+    else if(queue == "/codel")
+    {
+        Config::SetDefault ("ns3::FqPppQueueDisc::Type", EnumValue (FqPppQueueDisc::CoDel));
+    }
+    else if(queue == "/ppp")
+    {
+        Config::SetDefault ("ns3::FqPppQueueDisc::Type", EnumValue (FqPppQueueDisc::PPP_AQM_V2));
+    }
+    else if(queue == "/ppp_nada")
+    {
+        Config::SetDefault ("ns3::FqPppQueueDisc::Type", EnumValue (FqPppQueueDisc::PPP_AQM_V2));
+    }
+    else if(queue == "/ppp_const")
+    {
+        Config::SetDefault ("ns3::FqPppQueueDisc::Type", EnumValue (FqPppQueueDisc::PPP_AQM_V2));
+    }
+    else
+    {
+        NS_FATAL_ERROR("Unkown queue type !!!! " << queue);
+    }
+
+    // configure default TCP parameters
+    Config::SetDefault ("ns3::TcpSocket::DelAckCount", UintegerValue (0));
+    Config::SetDefault ("ns3::TcpL4Protocol::SocketType", StringValue ("ns3::TcpCubic"));
+    Config::SetDefault ("ns3::TcpSocket::SegmentSize", UintegerValue (1000));
+    //Config::SetDefault ("ns3::RedQueueDisc::FengAdaptive", BooleanValue (true));
+    //Config::SetDefault ("ns3::RedQueueDisc::ARED", BooleanValue (true));
+    //Config::SetDefault ("ns3::RedQueueDisc::LInterm", DoubleValue (10));
+
+    const uint64_t linkBw   = TOPO_DEFAULT_BW;
+    const uint32_t msDelay  = TOPO_DEFAULT_PDELAY;
+    const uint32_t msQDelay = TOPO_DEFAULT_QDELAY;
+
+    const float minBw =  RMCAT_DEFAULT_RMIN;
+    const float maxBw =  RMCAT_DEFAULT_RMAX;
+    const float initBw = RMCAT_DEFAULT_RINIT;
+
+    
+
+    NodeContainer nodes = BuildExampleTopo (linkBw, msDelay, msQDelay);
+
+    int port = 8000;
+    auto dataProcessor = CreateObject<DataProcessor> ();
+    nodes.Get (0)->AggregateObject(dataProcessor);//need to aggregate to a node, such that the dispose function will be called when ns3 exits.
+    Simulator::Schedule(MilliSeconds(measurement_start_time_ms+1), &DataProcessor::StartMeasurement, dataProcessor);
+
+    nRmcat = std::max<int> (0, nRmcat); // No negative RMCAT flows
+    for (size_t i = 0; i < (unsigned int) nRmcat; ++i) {
+        auto start = 1. * i;
+        auto end = std::max (start + 1., endTime - start - 0.01);
+        InstallApps (nada, dataProcessor, nodes.Get (0), nodes.Get (1), port++,
+                     initBw, minBw, maxBw, start, end, i);
+    }
+
+    nTcp = std::max<int> (0, nTcp); // No negative TCP flows
+    for (size_t i = 0; i < (unsigned int) nTcp; ++i) {
+        auto start = 17. * i;
+        auto end = std::max (start + 1., endTime - start);
+        InstallTCP (nodes.Get (0), nodes.Get (1), port++, start, end);
+    }
+
+    // UDP parameters
+    const uint64_t bandwidth = TOPO_DEFAULT_BW / 4;
+    const uint32_t pktSize = DEFAULT_PACKET_SIZE;
+
+    nUdp = std::max<int> (0, nUdp); // No negative UDP flows
+    for (size_t i = 0; i < (unsigned int) nUdp; ++i) {
+        auto start = 50. * (i+1);
+        auto end = std::max (start + 1., endTime - start);
+        InstallUDP (nodes.Get (0), nodes.Get (1), port++,
+                    bandwidth, pktSize, start, end);
+    }
+
+
+
+    /*InstallUDP (nodes.Get (0), nodes.Get (1), port++,
+                    TOPO_DEFAULT_BW/4, pktSize, 50, 75);
+    InstallUDP (nodes.Get (0), nodes.Get (1), port++,
+                    TOPO_DEFAULT_BW/4, pktSize, 75, 125);
+    InstallUDP (nodes.Get (0), nodes.Get (1), port++,
+                    TOPO_DEFAULT_BW/4, pktSize, 75, 125);
+    InstallUDP (nodes.Get (0), nodes.Get (1), port++,
+                    TOPO_DEFAULT_BW/4, pktSize, 75, 125);
+    InstallUDP (nodes.Get (0), nodes.Get (1), port++,
+                TOPO_DEFAULT_BW/2, pktSize, 125, 150);
+    InstallUDP (nodes.Get (0), nodes.Get (1), port++,
+                    TOPO_DEFAULT_BW/2, pktSize, 200, 225);
+    InstallUDP (nodes.Get (0), nodes.Get (1), port++,
+                    TOPO_DEFAULT_BW/4, pktSize, 225, 250);*/
+    std::cout << "Running Simulation..." << std::endl;
+    Simulator::Stop (Seconds (endTime));
+    Simulator::Run ();
+    Simulator::Destroy ();
+    std::cout << "Done" << std::endl;
+
+    return 0;
+}

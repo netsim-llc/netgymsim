@@ -1,0 +1,130 @@
+# Copyright (c) 2022 Centre Tecnologic de Telecomunicacions de Catalunya (CTTC)
+#
+# SPDX-License-Identifier: GPL-2.0-only
+
+stages:
+  - code-linting
+  - build
+  - reuse
+  - documentation
+
+###################### BUILD STAGE #############################################
+
+# Defines the steps to run the tests
+# Inherit with "extends: .base-build" and remember to set
+# the following variables: COMPILER (g++, clang++, ...) and
+# MODE (debug, release, optimized)
+.base-build:
+  stage: build
+  script:
+    - git clone --branch=ns-$NS3_RELEASE_VERSION --depth=1 https://gitlab.com/nsnam/ns-3-dev.git
+    - mkdir -p $CCACHE_BASEDIR_VALUE
+    - export CCACHE_BASEDIR=${PWD}
+    - export CCACHE_DIR=${PWD}/$CCACHE_BASEDIR_VALUE
+    - ln -s ${PWD} ns-3-dev/contrib/nr
+    - pushd ns-3-dev
+    - git log -1
+    - CXX=$COMPILER ./ns3 configure -d $MODE -GNinja --enable-examples --enable-modules=nr --enable-tests --enable-asserts
+    - cmake --version
+    - ccache -z
+    - ./ns3 build
+    - if [ "$MODE" != "debug" ] && [ "`./utils/ccache-miss-rate.py`" != "0" ]; then
+        ./test.py --no-build --constrain example;
+        ./test.py --no-build --suite 'nr*';
+      fi
+    - ccache -s
+    - ./ns3 clean
+    - popd
+    - rm -rf ns-3-dev
+  cache:
+    # Use separate key for each (debug/optimized/release) jobs because
+    # they run in parallel and will otherwise overwrite each other
+    # cache when they upload the cache archive at the end of the job,
+    # resulting in only the cache for the last finished configuration
+    # being stored.
+    #
+    # Do not distinguish between branches though to avoid
+    # recompilation of all the files when a new branch is created.
+    key: "ccache-$CI_JOB_NAME"
+    paths:
+      - $CCACHE_BASEDIR_VALUE/
+  timeout: 9h
+  variables:
+    CCACHE_BASEDIR_VALUE: ns-3-ccache-storage
+    NS3_RELEASE_VERSION: "3.39"
+
+# Defines the per-commit jobs. They are executed for any branch
+.base-per-commit-compile:
+  extends: .base-build
+  except:
+    variables:
+      - $RELEASE == "weekly"
+      - $RELEASE == "daily"
+  image: archlinux
+  before_script:
+    - pacman-key --init
+    - pacman -Syu --noconfirm
+      base-devel gcc clang cmake ninja ccache
+      git
+      python
+      boost gsl gtk3
+      openssh
+
+per-commit-clang-debug:
+  extends: .base-per-commit-compile
+  variables:
+    MODE: debug
+    COMPILER: clang++
+
+per-commit-gcc-debug:
+  extends: .base-per-commit-compile
+  variables:
+    MODE: debug
+    COMPILER: g++
+
+per-commit-gcc-default:
+  extends: .base-per-commit-compile
+  variables:
+    MODE: default
+    COMPILER: g++
+
+per-commit-gcc-optimized:
+  extends: .base-per-commit-compile
+  variables:
+    MODE: optimized
+    COMPILER: g++
+
+reuse:
+  stage: reuse
+  image:
+    name: fsfe/reuse:latest
+    entrypoint: [""]
+  script:
+    - reuse lint
+
+pages:
+  stage: documentation
+  before_script:
+    - apt-get update
+    - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
+    - apt-get install -y doxygen graphviz make imagemagick dia texlive texlive-font-utils python3-sphinx latexmk texlive texlive-science texlive-formats-extra texlive-base python3-jinja2 python3-pygments texlive-fonts-extra git
+    - sed -i "s/EPS,PDF,//g" /etc/ImageMagick-6/policy.xml
+    - sed -i "s/none/read\ |\ write/g" /etc/ImageMagick-6/policy.xml
+  image: ubuntu
+  script:
+    - mkdir -p public/
+    - cd doc && make latexpdf
+    - cd ..
+    - mv doc/build/latex/*.pdf public/
+    - git submodule sync --recursive
+    - git submodule update --init --recursive
+    - python3 doc/m.css/documentation/doxygen.py doc/doxygen-mcss.conf --debug
+    - mv doc/doc/html/ public/
+  artifacts:
+    paths:
+      - public
+
+include:
+  - '.gitlab-ci-clang.yml'
+  - '.gitlab-ci-gcc.yml'
+  - '.gitlab-ci-code-linting.yml'
