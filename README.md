@@ -2,7 +2,6 @@
 # 6G Multi-Access Network Simulator (ns3)
 - The source files for the NetworkGym module are located at `contrib/networkgym/` folder.
 - The source files for the GMA module (for multi-access and RAN slicing) are located at `contrib/gma/` folder.
-- The source files for the 3rd party RMCAT/NADA module are located at `contrib/ns3-rmcat/` folder.
 - The example scripts are located at `scratch/` folder.
 
 1. Install ns-3.41. In the root directory, clone the [ns-3.41](https://www.nsnam.org/releases/ns-3-41/) and name it as `network_gym_sim`:
@@ -21,7 +20,6 @@ After downloading ns-3, install the dependencies and libraries following the [ns
   ```
   cp ../netgymsim/scratch/unified-network-slicing.cc scratch/
   cp -r ../netgymsim/contrib/gma contrib/
-  cp -r ../netgymsim/contrib/ns3-rmcat contrib/
   cp -r ../netgymsim/contrib/networkgym contrib/
   ```
 
