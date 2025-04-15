@@ -20,7 +20,9 @@ After downloading ns-3, install the dependencies and libraries following the [ns
 2. Copy gma and networkgym module files:
   ```
   cp ../netgymsim/scratch/unified-network-slicing.cc scratch/
-  cp -r ../netgymsim/contrib/* contrib/
+  cp -r ../netgymsim/contrib/gma contrib/
+  cp -r ../netgymsim/contrib/ns3-rmcat contrib/
+  cp -r ../netgymsim/contrib/networkgym contrib/
   ```
 
 3. Install the ZeroMQ socket C++ library (required by networkgym module):
