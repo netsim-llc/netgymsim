@@ -1,3 +1,8 @@
+/* Copyright(C) 2024 Intel Corporation
+*  SPDX-License-Identifier: GPL-2.0
+*  https://spdx.org/licenses/GPL-2.0.html
+*/
+
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 
 #include "data-processor.h"
@@ -98,7 +103,7 @@ DataProcessor::DataProcessor ()
   std::ifstream jsonStreamEnv("env-configure.json");
   json jsonConfigEnv;
   jsonStreamEnv >> jsonConfigEnv;
-  m_totalSteps = jsonConfigEnv["steps_per_episode"].get<int>() * jsonConfigEnv["episodes_per_session"].get<int>();
+  m_totalSteps = jsonConfigEnv["steps_per_episode"].get<uint64_t>() * jsonConfigEnv["episodes_per_session"].get<uint64_t>();
   uint32_t mSize = jsonConfigEnv["subscribed_network_stats"].size();
   for (uint32_t i = 0; i < mSize; i++)
   {

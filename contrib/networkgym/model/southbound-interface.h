@@ -1,3 +1,8 @@
+/* Copyright(C) 2024 Intel Corporation
+*  SPDX-License-Identifier: GPL-2.0
+*  https://spdx.org/licenses/GPL-2.0.html
+*/
+
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 #ifndef SOUTHBOUND_INTERFACE_H
 #define SOUTHBOUND_INTERFACE_H

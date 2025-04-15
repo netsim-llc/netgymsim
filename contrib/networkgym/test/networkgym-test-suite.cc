@@ -1,7 +1,11 @@
 
-// Include a header file from your module to test.
-#include "ns3/networkgym.h"
+/* Copyright(C) 2024 Intel Corporation
+*  SPDX-License-Identifier: GPL-2.0
+*  https://spdx.org/licenses/GPL-2.0.html
+*/
 
+
+// Include a header file from your module to test.
 // An essential include is test.h
 #include "ns3/test.h"
 

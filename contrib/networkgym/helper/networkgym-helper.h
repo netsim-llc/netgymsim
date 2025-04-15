@@ -1,3 +1,8 @@
+/* Copyright(C) 2024 Intel Corporation
+*  SPDX-License-Identifier: GPL-2.0
+*  https://spdx.org/licenses/GPL-2.0.html
+*/
+
 #ifndef NETWORKGYM_HELPER_H
 #define NETWORKGYM_HELPER_H
 

@@ -10,6 +10,8 @@ if(${ENABLE_EXAMPLES})
         )
 endif()
 
+find_package(ZeroMQ REQUIRED PATHS ./)
+
 build_lib(
     LIBNAME networkgym
     SOURCE_FILES model/data-processor.cc
@@ -19,6 +21,7 @@ build_lib(
                  model/southbound-interface.h
                  helper/networkgym-helper.h
     LIBRARIES_TO_LINK ${libcore}
+                      ${ZeroMQ_LIBRARY}
     TEST_SOURCES test/networkgym-test-suite.cc
                  ${examples_as_tests_sources}
 )
