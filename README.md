@@ -1,6 +1,93 @@
-## **Pre-requisite**
-- Clone this repo.
-- Install [ZeroMQ](https://zeromq.org/languages/c/) library. We only need the C library. Not the C++ one. For Linux:
-```
-apt-get install libczmq-dev
-```
+
+# NetSim Solutions LLC's ns-3 Network Simulator
+- The source files for the NetworkGym module are located at `contrib/networkgym/` folder.
+- The source files for the GMA module (for multi-access and RAN slicing) are located at `contrib/gma/` folder.
+- The source files for the 3rd party RMCAT/NADA module are located at `contrib/ns3-rmcat/` folder.
+- The example scripts are located at `scratch/` folder.
+
+1. Install ns-3.41. In the root directory, clone the [ns-3.41](https://www.nsnam.org/releases/ns-3-41/) and name it as `network_gym_sim`:
+  ```
+  git clone -b ns-3.41 https://gitlab.com/nsnam/ns-3-dev.git network_gym_sim
+  ```
+After downloading ns-3, install the dependencies and libraries following the [ns-3 prerequisites](https://www.nsnam.org/docs/tutorial/html/getting-started.html#prerequisites). Build the ns-3 with the following commands. You can find more information on building ns-3 [here](https://www.nsnam.org/docs/tutorial/html/getting-started.html#building-ns-3).
+  ```
+  cd network_gym_sim
+  ./ns3 clean
+  ./ns3 configure --build-profile=optimized --disable-examples --disable-tests
+  ./ns3 build
+  ```
+
+2. Copy gma and networkgym module files:
+  ```
+  cp ../netgymsim/scratch/unified-network-slicing.cc scratch/
+  cp -r ../netgymsim/contrib/* contrib/
+  ```
+
+3. Install the ZeroMQ socket C++ library (required by networkgym module):
+  ```
+  apt-get install libczmq-dev
+  ```
+
+4. Install the 5G nr module from [here](https://gitlab.com/cttc-lena/nr/-/tree/5g-lena-v3.0.y?ref_type=heads), using the 5g-lena-v3.0.y branch:
+  ```
+  cd contrib
+  git clone -b 5g-lena-v3.0.y https://gitlab.com/cttc-lena/nr
+  ```
+
+5. Install the C++ Json library. Replace the `network_gym_sim/contrib/networkgym/model/json.hpp` with the [json.hpp](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json.hpp):
+  ```
+  cd networkgym/model/
+  rm json.hpp
+  wget https://raw.githubusercontent.com/nlohmann/json/develop/single_include/nlohmann/json.hpp
+  ```
+
+6. Finally, we need to fix a few bugs in the ns-3. The lte module hard coded the IP addresses for the backhaul links. This two files allows we to customize the IP addresses for the backhaul links. 
+  ```
+  cd ../../../../
+  cp netgymsim/contrib/modified/no-backhaul-epc-helper.cc network_gym_sim/src/lte/helper/no-backhaul-epc-helper.cc
+  cp netgymsim/contrib/modified/point-to-point-epc-helper.cc network_gym_sim/src/lte/helper/point-to-point-epc-helper.cc
+  ```
+
+7 Try to build ns-3 once again to see if there is any errors:
+  ```
+  cd network_gym_sim
+  ./ns3 build
+  ```
+8. (Optional) With the previous steps, the code should be running without any issue. However, we also identified a few more issues related to TCP or BBR and proposed fixes in the modified files located in `netgymsim/contrib/modified/` folder. You can also replace the original files with them if needed. Again, this is not required.
+
+  
+# How to Update NS3 Version
+
+1. download the new version.
+2. copy contrib folder to new version.
+3. copy scratch folder to new version.
+4. copy /build-support/3rd-party/FindZeroMQ.cmake to new version.
+5. add ZMQ lib in the build-support/macros-and-definations.cmake file. the commands after >> sign.
+
+  if(${PRECOMPILE_HEADERS_ENABLED} AND (NOT ${BEXEC_IGNORE_PCH}))
+    target_precompile_headers(
+      ${BEXEC_EXECNAME_PREFIX}${BEXEC_EXECNAME} REUSE_FROM stdlib_pch_exec
+    )
+  endif()
+
+  >> find_package(ZeroMQ REQUIRED)
+
+  if(${NS3_STATIC} AND (NOT BEXEC_STANDALONE))
+    target_link_libraries(
+      ${BEXEC_EXECNAME_PREFIX}${BEXEC_EXECNAME} ${LIB_AS_NEEDED_PRE_STATIC}
+      ${lib-ns3-static} >> ${ZeroMQ_LIBRARY}
+    )
+  elseif(${NS3_MONOLIB} AND (NOT BEXEC_STANDALONE))
+    target_link_libraries(
+      ${BEXEC_EXECNAME_PREFIX}${BEXEC_EXECNAME} ${LIB_AS_NEEDED_PRE}
+      ${lib-ns3-monolib} ${LIB_AS_NEEDED_POST} >> ${ZeroMQ_LIBRARY}
+    )
+  else()
+    target_link_libraries(
+      ${BEXEC_EXECNAME_PREFIX}${BEXEC_EXECNAME} ${LIB_AS_NEEDED_PRE}
+      "${BEXEC_LIBRARIES_TO_LINK}" ${LIB_AS_NEEDED_POST} >> ${ZeroMQ_LIBRARY}
+    )
+  endif()
+
+6. update README.
+7. copy gitignore to the new version.
