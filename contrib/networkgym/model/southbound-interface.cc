@@ -52,6 +52,12 @@ SouthboundInterface::DoDispose (void)
   std::cout  << m_workerName << ": ns3 disconnected from NetworkGym." << std::endl;
 }
 
+bool
+SouthboundInterface::NetGymConnected()
+{
+  return(m_netgymConnected);
+}
+
 
 void
 SouthboundInterface::Connect()
@@ -76,8 +82,17 @@ SouthboundInterface::Connect()
   int64_t linger = 10000;
   zmq_setsockopt (m_zmq_socket, ZMQ_LINGER, &linger, sizeof linger);
   std::string addrAndPort = "tcp://localhost:"+std::to_string(portN);
-  zmq_connect (m_zmq_socket, addrAndPort.c_str());
-
+  
+  if (portN == 0)
+  {
+      m_netgymConnected = false;
+    }
+  else
+  {
+    zmq_connect (m_zmq_socket, addrAndPort.c_str());
+    m_netgymConnected = false;
+  }
+  
 }
 
 void

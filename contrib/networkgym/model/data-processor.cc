@@ -167,6 +167,11 @@ DataProcessor::AppendMeasurement(Ptr<NetworkStats> measurement)
 void
 DataProcessor::ExchangeMeasurementAndAction()
 {
+  if (!m_southbound->NetGymConnected())
+  {
+    return; // TODO: add a flag to return immediately if the networkgym server is not connected 
+  } 
+
   if(!m_measurementStarted)
   {
     return;

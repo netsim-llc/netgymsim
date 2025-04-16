@@ -28,11 +28,12 @@ public:
   void SendMeasurementJson (json& networkStats, json& workloadStats); //network stats and workload stats measurement
   void SendMeasurementJson (json& networkStats); //network stats measurement
   void GetAction (json& action, bool raiseError); //if raiseError = true, the program exits with error when the action is not received after poll timeout.
+  bool NetGymConnected();
 
 private:
   void Connect();
   int m_maxActionWaitTime; //unit ms
-
+  bool m_netgymConnected = false;
   void *m_zmq_context;
   void *m_zmq_socket;
   std::string m_workerName;
