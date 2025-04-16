@@ -4,9 +4,9 @@
 - The source files for the GMA module (for multi-access and RAN slicing) are located at `contrib/gma/` folder.
 - The example scripts are located at `scratch/` folder.
 
-1. Install ns-3.40:
+1. Install ns-3.42:
   ```
-  git clone -b ns-3.40 https://gitlab.com/nsnam/ns-3-dev.git network_gym_sim
+  git clone -b ns-3.42 https://gitlab.com/nsnam/ns-3-dev.git network_gym_sim
   ```
 After downloading ns-3, install the dependencies and libraries following the [ns-3 prerequisites](https://www.nsnam.org/docs/tutorial/html/getting-started.html#prerequisites). Build the ns-3 with the following commands. You can find more information on building ns-3 [here](https://www.nsnam.org/docs/tutorial/html/getting-started.html#building-ns-3).
   ```
@@ -30,7 +30,7 @@ After downloading ns-3, install the dependencies and libraries following the [ns
 4. Install the 3rd party 5G nr module:
   ```
   cd contrib
-  git clone -b 5g-lena-v2.6.y https://gitlab.com/cttc-lena/nr
+  git clone -b 5g-lena-v3.3.y https://gitlab.com/cttc-lena/nr
   ```
 
 5. Install the C++ Json library. Replace the `network_gym_sim/contrib/networkgym/model/json.hpp` with the [json.hpp](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json.hpp):
