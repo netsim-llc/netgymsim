@@ -1,4 +1,9 @@
 /*
+Copyright(C) 2025 Network Simulation Solutions LLC
+SPDX-License-Identifier: GPLv2.0
+*/
+
+/*
  * Copyright (c) 2011 Centre Tecnologic de Telecomunicacions de Catalunya (CTTC)
  *
  * This program is free software; you can redistribute it and/or modify

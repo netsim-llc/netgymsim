@@ -1,4 +1,7 @@
-/* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
+/*
+Copyright(C) 2025 Network Simulation Solutions LLC
+SPDX-License-Identifier: GPLv2.0
+*/
 
 #include "gma-virtual-interface.h"
 #include "ns3/mobility-module.h"

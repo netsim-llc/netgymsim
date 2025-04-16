@@ -1,4 +1,9 @@
 /*
+Copyright(C) 2025 Network Simulation Solutions LLC
+SPDX-License-Identifier: GPLv2.0
+*/
+
+/*
  * Copyright (c) 2009 Duy Nguyen
  * Copyright (c) 2015 Ghada Badawy
  *

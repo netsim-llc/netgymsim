@@ -1,7 +1,8 @@
-/* Copyright(C) 2024 Intel Corporation
-*  SPDX-License-Identifier: GPL-2.0
-*  https://spdx.org/licenses/GPL-2.0.html
+/*
+Copyright(C) 2025 Network Simulation Solutions LLC
+SPDX-License-Identifier: GPLv2.0
 */
+
 
 #ifndef NETWORKGYM_HELPER_H
 #define NETWORKGYM_HELPER_H

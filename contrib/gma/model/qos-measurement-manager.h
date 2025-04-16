@@ -1,4 +1,8 @@
-/* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
+/*
+Copyright(C) 2025 Network Simulation Solutions LLC
+SPDX-License-Identifier: GPLv2.0
+*/
+
 #ifndef QOS_MEASUREMENT_MANAGER_H
 #define QOS_MEASUREMENT_MANAGER_H
 
