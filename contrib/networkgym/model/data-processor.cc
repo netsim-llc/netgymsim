@@ -167,11 +167,7 @@ DataProcessor::AppendMeasurement(Ptr<NetworkStats> measurement)
 void
 DataProcessor::ExchangeMeasurementAndAction()
 {
-  if (!m_southbound->NetGymConnected())
-  {
-    return; // TODO: add a flag to return immediately if the networkgym server is not connected 
-  } 
-
+ 
   if(!m_measurementStarted)
   {
     return;
@@ -303,14 +299,19 @@ DataProcessor::ExchangeMeasurementAndAction()
  
   json workloadStats;
   workloadStats["time_lapse"].push_back(element);
-
-  m_southbound->SendMeasurementJson(networkStats, workloadStats);
+  if (m_southbound->NetGymConnected())
+    m_southbound->SendMeasurementJson(networkStats, workloadStats);  
   m_measurementBatch.clear();
 
   if (m_waitCounter+1 >= m_totalSteps)
   {
     //the first step is the reset function which does not need an action. therefore we +1.
     m_measurementStarted = false; //simulated the max number of steps. stop sending measurement and receive actions.
+    return;
+  }
+
+  if (!m_southbound->NetGymConnected())
+  {
     return;
   }
 
