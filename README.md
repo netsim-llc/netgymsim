@@ -27,7 +27,7 @@ After downloading ns-3, install the dependencies and libraries following the [ns
   apt-get install libczmq-dev
   ```
 
-4. Install the 5G nr module from [here](https://gitlab.com/cttc-lena/nr/-/tree/5g-lena-v3.0.y?ref_type=heads), using the 5g-lena-v3.0.y branch:
+4. Install the 3rd party 5G nr module:
   ```
   cd contrib
   git clone -b 5g-lena-v2.6.y https://gitlab.com/cttc-lena/nr
