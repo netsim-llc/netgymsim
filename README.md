@@ -47,7 +47,7 @@ After downloading ns-3, install the dependencies and libraries following the [ns
   cp netgymsim/contrib/modified/point-to-point-epc-helper.cc network_gym_sim/src/lte/helper/point-to-point-epc-helper.cc
   ```
 
-7 Try to build ns-3 once again to see if there is any errors:
+7. Try to build ns-3 once again to see if there is any errors:
   ```
   cd network_gym_sim
   ./ns3 clean
@@ -56,9 +56,9 @@ After downloading ns-3, install the dependencies and libraries following the [ns
   ```
 8. (Optional) With the previous steps, the code should be running without any issue. However, we also identified a few more issues related to TCP or BBR and proposed fixes in the modified files located in `netgymsim/contrib/modified/` folder. You can also replace the original files with them if needed. Again, this is not required.
 
-9. Run the example script 
+9. Run the example script
   ```
   cd network_gym_sim
-  ./ns3 run sccratch/unified-network-slicing --cwd "/home/netgymsim/test/"
+  ./ns3 run sccratch/unified-network-slicing --cwd "path-to-netgymsim/netgymsim/test/"
   ```
 
