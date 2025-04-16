@@ -59,6 +59,6 @@ After downloading ns-3, install the dependencies and libraries following the [ns
 9. Run the example script
   ```
   cd network_gym_sim
-  ./ns3 run sccratch/unified-network-slicing --cwd "path-to-netgymsim/netgymsim/test/"
+  ./ns3 run sccratch/unified-network-slicing --cwd "path-to-netgymsim/netgymsim/test/multi-access"
   ```
 
