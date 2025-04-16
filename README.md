@@ -4,7 +4,7 @@
 - The source files for the GMA module (for multi-access and RAN slicing) are located at `contrib/gma/` folder.
 - The example scripts are located at `scratch/` folder.
 
-1. Install ns-3.40. In the root directory, clone the [ns-3.40](https://www.nsnam.org/releases/ns-3-40/) and name it as `network_gym_sim`:
+1. Install ns-3.40:
   ```
   git clone -b ns-3.40 https://gitlab.com/nsnam/ns-3-dev.git network_gym_sim
   ```
