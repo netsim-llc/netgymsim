@@ -56,9 +56,11 @@ After downloading ns-3, install the dependencies and libraries following the [ns
   ```
 8. (Optional) With the previous steps, the code should be running without any issue. However, we also identified a few more issues related to TCP or BBR and proposed fixes in the modified files located in `netgymsim/contrib/modified/` folder. You can also replace the original files with them if needed. Again, this is not required.
 
-9. Run the example script
+9. Run the example script for multi-access (or networkslicing )
   ```
   cd network_gym_sim
-  ./ns3 run sccratch/unified-network-slicing --cwd "path-to-netgymsim/netgymsim/test/multi-access"
+  ./ns3 run sccratch/unified-network-slicing --cwd "path-to-netgymsim/netgymsim/test/multi-access (or neworkslicing)"
   ```
+
+  
 
