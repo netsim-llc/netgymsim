@@ -89,7 +89,7 @@ QosMeasurementManager::MeasureIntervalEndCheck(Time t)
     if(it != m_cidToQosMeasurementMap.end())
     {
       //find measurement for this cid
-      if(it->second.IsRunning())
+      if(it->second.IsPending())
       {
         //measurement is running.
         auto itPkt = m_cidToLastPacketNMap.find(cid);
@@ -187,7 +187,7 @@ QosMeasurementManager::QosMeasurementStart (uint8_t cid, uint8_t duration)
   //e.g., we set some QOS requirement at the beginning of the measurement. packet loss ratio, high delay packet ratio etc.
 
   auto it = m_cidToQosMeasurementMap.find(cid);
-  if (it!=m_cidToQosMeasurementMap.end() && it->second.IsRunning())
+  if (it!=m_cidToQosMeasurementMap.end() && it->second.IsPending())
   {
     //measurement already running, no action. this happens when qos request is retransmitted...
     //NS_FATAL_ERROR("cannot run this measurement since the previous measurement is running");
@@ -301,7 +301,7 @@ void
 QosMeasurementManager::QuitQosMeasurement(uint8_t cid)
 {
   auto it = m_cidToQosMeasurementMap.find(cid);
-  if (it!=m_cidToQosMeasurementMap.end() && it->second.IsRunning())
+  if (it!=m_cidToQosMeasurementMap.end() && it->second.IsPending())
   {
     it->second.Cancel();
   }

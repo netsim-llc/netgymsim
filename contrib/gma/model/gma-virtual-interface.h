@@ -241,7 +241,7 @@ private:
 
   struct MeasureParam : public SimpleRefCount<MeasureParam>
   {
-    uint64_t m_rcvBytes = 0;;
+    uint64_t m_rcvBytes = 0;
     uint32_t m_minOwd = UINT32_MAX;
     uint32_t m_maxOwd = 0;
     uint64_t m_owdSum = 0;

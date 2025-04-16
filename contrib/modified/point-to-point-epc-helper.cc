@@ -49,13 +49,13 @@ PointToPointEpcHelper::PointToPointEpcHelper()
 
     std::ostringstream subnet1, subnet2;
     static int subNetId = 0;
-
+    subNetId += 10;
     subnet1 << subNetId+10 << ".0.0.0";
     m_s1uIpv4AddressHelper.SetBase(subnet1.str ().c_str (), "255.255.255.252");
     subnet2 << subNetId+11 << ".0.0.0";
     m_s1uIpv4AddressHelper.SetBase(subnet2.str ().c_str (), "255.255.255.252");
     
-    subNetId += 10;
+    
 }
 
 PointToPointEpcHelper::~PointToPointEpcHelper()

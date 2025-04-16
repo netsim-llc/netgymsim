@@ -26,8 +26,10 @@ GmaRxControl::GetTypeId (void)
     .AddAttribute ("SplittingAlgorithm", 
     			"Receiver side traffic splitting algorithm.",
                EnumValue (GmaRxControl::Delay),
-               MakeEnumAccessor (&GmaRxControl::m_algorithm),
-               MakeEnumChecker (GmaRxControl::Delay, "optimize average delay",
+			   MakeEnumAccessor<GmaRxControl::GmaRxAlgorithm>(
+				&GmaRxControl::GmaSetAlgorithm,
+				&GmaRxControl::GmaGetAlgorithm), //update for ns-3.42
+			   MakeEnumChecker (GmaRxControl::Delay, "optimize average delay",
 			   					GmaRxControl::gma, "same as Delay, optimize average delay",
 								GmaRxControl::gma2, "split case optimize delay violation, steer case select min owd link",
               					GmaRxControl::CongDelay, "after primary link congests, optimize average delay",

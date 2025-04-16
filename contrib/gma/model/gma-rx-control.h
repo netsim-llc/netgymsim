@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPLv2.0
 #include <ns3/network-module.h>
 #include <ns3/internet-module.h>
 #include <ns3/virtual-net-device.h>
+
 #include "mx-control-header.h"
 #include <ns3/integer.h>
 #include "link-state.h"
@@ -60,8 +61,6 @@ public:
   /*
     configure the link selection method
   */
-  void SetAlgorithm (std::string algorithm);
-
   Ptr<SplittingDecision> GetTrafficSplittingDecision (Ptr<RxMeasurement> measurement);
   Ptr<SplittingDecision> GetTrafficSplittingDecision (Ptr<RlAction> action);
 
@@ -100,6 +99,9 @@ public:
   int GetMeasurementBurstRequirement ();
   uint32_t GetQueueingDelayTargetMs();
   void SetQosTarget(double delayTarget, double lossTarge);
+  void SetAlgorithm (std::string algorithm);
+  void GmaSetAlgorithm (GmaRxAlgorithm algo) { m_algorithm = algo; } //update to support ns3.42
+  GmaRxAlgorithm GmaGetAlgorithm () const { return m_algorithm; }
 
 private:
 
@@ -111,7 +113,6 @@ private:
   Ptr<SplittingDecision> QosSteerAlgorithm (Ptr<RxMeasurement> measurement);
 
   //Ptr<RxCtrlParams> DelayAndCongestionAlgorithm (Ptr<RxMeasurement> measurement);
-
 
   enum GmaRxAlgorithm m_algorithm;
   uint8_t m_splittingBurst;

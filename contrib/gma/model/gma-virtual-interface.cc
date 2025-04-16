@@ -624,7 +624,7 @@ GmaVirtualInterface::CollectMeasureResults()
 			rate = m_flowParam->m_rcvBytes/(m_measurementInterval.GetMilliSeconds()) * 8; //kbps
 		}
 
-		if(m_lastDecision != NULL)
+		if(m_lastDecision != nullptr)
 		{
 			std::vector<uint8_t> cidList = m_linkState->GetCidList();
 			for (uint8_t link = 0; link < m_lastDecision->m_splitIndexList.size(); link++)
@@ -1688,7 +1688,7 @@ GmaVirtualInterface::InOrderDelivery (Ptr<Packet> packet, const GmaHeader& gmaHe
 			{
 				//put this packet into the reordering queue, but mark it as inorder such that it will be delivered if the packet before it is released.
 				NS_ASSERT_MSG(m_totalQueueSize!=0, "it cannnot be empty here");
-				NS_ASSERT_MSG(m_reorderingTimeoutEvent.IsRunning(), "The reordering cannot be expired");
+				NS_ASSERT_MSG(m_reorderingTimeoutEvent.IsPending(), "The reordering cannot be expired");
 				Ptr<RxQueueIterm> item = Create <RxQueueIterm> ();
 				item->m_packet = packet;
 				item->m_gmaHeader = gmaHeader;
@@ -1967,7 +1967,7 @@ GmaVirtualInterface::ReleaseInOrderPackets()
 		Time delay = m_reorderingTimeout + MilliSeconds(1) - (Now() - m_linkParamsMap[minCid]->m_reorderingQueue.front()->m_receivedTime);
 		m_reorderingTimeoutEvent = Simulator::Schedule(delay, &GmaVirtualInterface::ReorderingTimeout, this);
 	}
-	else if (m_reorderingTimeoutEvent.IsRunning())
+	else if (m_reorderingTimeoutEvent.IsPending())
 	{
 		m_reorderingTimeoutEvent.Cancel();
 	}

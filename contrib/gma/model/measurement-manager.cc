@@ -493,7 +493,7 @@ void MeasurementManager::MeasureIntervalStartCheck(Time t, uint32_t sn, uint32_t
 	{
 		//we assume the sender owd adjustment takes effects afer receives the packet after receives tsa.
 
-		if(m_delayMeasurementEvent.IsRunning())
+		if(m_delayMeasurementEvent.IsPending())
 		{
 			//no action, we are delaying the measurement.
 		}

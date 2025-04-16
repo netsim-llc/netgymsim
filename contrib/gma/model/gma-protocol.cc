@@ -268,7 +268,7 @@ GmaProtocol::VirtualRecv (Ptr<Socket> socket)
 				return;
 			}
 			auto iter = m_channelToQoSRequestInfo.find(mxHeader.GetChannelId());
-			if (iter != m_channelToQoSRequestInfo.end() && iter->second->m_qosTestProhibitTimer.IsRunning())
+			if (iter != m_channelToQoSRequestInfo.end() && iter->second->m_qosTestProhibitTimer.IsPending())
 			{
 				//there is a qos testing active for this channel ID, we cannot start a new qos testing....add to the pending queue
 				Ptr<QosRequestItem> item = Create<QosRequestItem>();

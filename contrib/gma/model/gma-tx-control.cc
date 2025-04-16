@@ -43,7 +43,9 @@ GmaTxControl::GetTypeId (void)
     .AddAttribute ("SplittingAlgorithm", 
     			"Transmitter side traffic splitting algorithm.",
                EnumValue (GmaTxControl::RxSide),
-               MakeEnumAccessor (&GmaTxControl::m_algorithm),
+			   MakeEnumAccessor<GmaTxControl::GmaTxAlgorithm>(
+				&GmaTxControl::GmaSetAlgorithm,
+				&GmaTxControl::GmaGetAlgorithm), //update for ns-3.42
                MakeEnumChecker (GmaTxControl::RxSide, "traffic splitting control based on infomation only from RX side (TSU)",
                                 GmaTxControl::DefaultLink, "traffic splitting control based on the default link. All traffic goes to this link."))
   ;

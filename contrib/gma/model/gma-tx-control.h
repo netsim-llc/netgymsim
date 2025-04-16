@@ -47,6 +47,9 @@ public:
     DefaultLink = 2,        //traffic splitting control based on default link id, no update. All traffic goes to this link.
   };
 
+  void GmaSetAlgorithm (GmaTxAlgorithm algo) { m_algorithm = algo; } //update to support ns3.42
+  GmaTxAlgorithm GmaGetAlgorithm () const { return m_algorithm; } //update for ns-3.42
+
 private:
 
   uint8_t RxSideAlgorithm ();

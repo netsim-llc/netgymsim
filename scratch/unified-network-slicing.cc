@@ -1618,11 +1618,11 @@ GmaSimWorker::InstallNetworks()
     NodeContainer nRnNr= NodeContainer (m_router, m_nrRouter);
     NetDeviceContainer dRdNr = p2p.Install (nRnNr);
 
-    // Later, we add IP addresses. Make  sure to use the same subnet of the nr packet gate way. e.g., *17.0.0.0*, such that we do not need to setup the ip route within NR.
-    ipv4.SetBase ("17.17.0.0", "255.255.255.0");
+    // Later, we add IP addresses. Make  sure to use the same subnet of the nr packet gate way. e.g., *7.0.0.0*, such that we do not need to setup the ip route within NR.
+    ipv4.SetBase ("7.17.0.0", "255.255.255.0");
     m_iRiNr = ipv4.Assign (dRdNr);
 
-    staticRoutingR->AddNetworkRouteTo (Ipv4Address ("17.0.0.0"), Ipv4Mask ("255.0.0.0"), m_router->GetNDevices() - 1);
+    staticRoutingR->AddNetworkRouteTo (Ipv4Address ("7.0.0.0"), Ipv4Mask ("255.0.0.0"), m_router->GetNDevices() - 1);
 
     //Ptr<Ipv4StaticRouting> staticRoutingNr = ipv4RoutingHelper.GetStaticRouting (m_nrRouter->GetObject<Ipv4> ());
     //staticRoutingNr->AddNetworkRouteTo (Ipv4Address ("50.0.0.0"), Ipv4Mask ("255.0.0.0"), m_nrRouter->GetNDevices() - 1);
@@ -1765,8 +1765,8 @@ GmaSimWorker::InstallNetworks()
 
     }
 
-    // attach UEs to the closest eNB
-    m_nrHelper->AttachToClosestEnb(nrUeNetDev, nrEnbNetDev);
+    // attach UEs to the closest GNB
+    m_nrHelper->AttachToClosestGnb(nrUeNetDev, nrEnbNetDev);
     //m_nrHelper->EnableTraces();
   }
 

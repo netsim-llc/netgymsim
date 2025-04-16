@@ -277,7 +277,7 @@ PhyAccessControl::SendPacket (Ptr<Packet> pkt, uint8_t tos)
 						newGmaHeader.SetClientId(gmaHeader.GetClientId());
 						newP->AddHeader (newGmaHeader);
 
-						if(m_socket == NULL)
+						if(m_socket == nullptr)
 						{
 							std::cout << Now().GetSeconds() << " socket not setup yet! not TX" << "\n";
 						}
@@ -298,7 +298,7 @@ PhyAccessControl::SendPacket (Ptr<Packet> pkt, uint8_t tos)
 	}
 
 
-	if(m_socket == NULL)
+	if(m_socket == nullptr)
 	{
 		std::cout << Now().GetSeconds() << " socket not setup yet! not TX" << "\n";
 	}
@@ -306,7 +306,9 @@ PhyAccessControl::SendPacket (Ptr<Packet> pkt, uint8_t tos)
 	{
 		//m_socket->SendTo (pkt, 0 ,InetSocketAddress (m_ipAddr, m_portNumber));
 		InetSocketAddress destAddr (m_ipAddr, m_portNumber);
-		destAddr.SetTos(tos);		
+		//destAddr.SetTos(tos);		
+		m_socket->SetIpTos(tos);      //update for ns-3.42
+
 
 		//std::cout << " tos print:" << +destAddr.GetTos() << std::endl;
 		m_socket->SendTo (pkt, 0 ,destAddr);

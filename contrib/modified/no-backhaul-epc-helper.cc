@@ -74,6 +74,7 @@ NoBackhaulEpcHelper::NoBackhaulEpcHelper()
 
     std::ostringstream subnet1, subnet2, subnet3, subnet4;
     static int subNetId = 0;
+    subNetId += 10;
 
     subnet1 << subNetId+12 << ".0.0.0";
     m_x2Ipv4AddressHelper.SetBase(subnet1.str ().c_str (), "255.255.255.252");
@@ -86,7 +87,7 @@ NoBackhaulEpcHelper::NoBackhaulEpcHelper()
 
     subnet4 << subNetId+7 << ".0.0.0";
     m_uePgwAddressHelper.SetBase (subnet4.str ().c_str (), "255.0.0.0");
-    subNetId += 10;
+    
 
     // we use a /64 IPv6 net all UEs
     m_uePgwAddressHelper6.SetBase("7777:f00d::", Ipv6Prefix(64));
