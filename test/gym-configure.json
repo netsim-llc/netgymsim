@@ -1,0 +1,7 @@
+{
+    "env_port": 8087,
+    "session_name": "admin",
+    "session_key": "admin",
+    "env_identity": "admin-1-jinglab",
+    "client_identity": "jing-0"
+}
