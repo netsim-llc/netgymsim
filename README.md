@@ -4,7 +4,7 @@
 - The source files for the GMA module (for multi-access and RAN slicing) are located at `contrib/gma/` folder.
 - The example scripts are located at `scratch/` folder.
 
-1. Install ns-3.41. In the root directory, clone the [ns-3.41](https://www.nsnam.org/releases/ns-3-41/) and name it as `network_gym_sim`:
+1. Install ns-3.40. In the root directory, clone the [ns-3.40](https://www.nsnam.org/releases/ns-3-40/) and name it as `network_gym_sim`:
   ```
   git clone -b ns-3.40 https://gitlab.com/nsnam/ns-3-dev.git network_gym_sim
   ```
@@ -50,6 +50,8 @@ After downloading ns-3, install the dependencies and libraries following the [ns
 7 Try to build ns-3 once again to see if there is any errors:
   ```
   cd network_gym_sim
+  ./ns3 clean
+  ./ns3 configure --build-profile=optimized --disable-examples --disable-tests
   ./ns3 build
   ```
 8. (Optional) With the previous steps, the code should be running without any issue. However, we also identified a few more issues related to TCP or BBR and proposed fixes in the modified files located in `netgymsim/contrib/modified/` folder. You can also replace the original files with them if needed. Again, this is not required.
