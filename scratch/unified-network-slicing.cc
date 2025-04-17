@@ -633,12 +633,18 @@ GmaSimWorker::LteUeMeasurementCallback(std::string path, int sliceId, double rat
   }
   m_gmaDataProcessor->AppendMeasurement(element);
 
-  if(m_nrEnbNodes.GetN() > 0)
+  //ToDo: create a measurement for NR ue here. move the NR measurement in the future.
+  if(m_nrEnbNodes.GetN() > 0) 
   {
-    //create a measurement for NR ue here. move the NR measurement in the future.
+    
     //NR not support handover yet.
     ns3::Ptr<ns3::NetworkStats> elementNr = ns3::CreateObject<ns3::NetworkStats>("nr", imsi, nowTime.GetMilliSeconds());
-    elementNr->Append("cell_id", m_gmaDataProcessor->GetCellId(imsi, CELLULAR_NR_CID)/m_nr_bwp_num); //divide the number of bandwith part...
+    
+    //elementNr->Append("cell_id", m_gmaDataProcessor->GetCellId(imsi, CELLULAR_NR_CID)/m_nr_bwp_num); //divide the number of bandwith part...
+    
+    //TO: need to use NR imsi not LTE imsi
+    elementNr->Append("cell_id", 255); //m_gmaDataProcessor->GetCellId(imsi, CELLULAR_NR_CID)/m_nr_bwp_num); //divide the number of bandwith part...
+    
     m_gmaDataProcessor->AppendMeasurement(elementNr);
   }
 
@@ -679,7 +685,8 @@ GmaSimWorker::NotifyConnectionEstablished (std::string context,
   //TODO: move it to the nr measurement in the future.
   if (nodeId != 1)
   {
-    //not lte ENB
+    //NR
+    //do not use "imsi" as client ID, because a client may get different imsi from LTE and NR
     m_gmaDataProcessor->UpdateCellId(imsi, cellid, "nr");
   }
 }
@@ -2150,6 +2157,8 @@ GmaSimWorker::ConnectTraceCallbacks()
                               MakeCallback(&GmaSimWorker::LteUeMeasurementCallback, this));
     Config::Connect("/NodeList/*/DeviceList/*/LteEnbRrc/ConnectionEstablished",
                   MakeCallback (&GmaSimWorker::NotifyConnectionEstablished, this));
+    Config::Connect("/NodeList/*/DeviceList/*/NrGnbRrc/ConnectionEstablished",
+                    MakeCallback (&GmaSimWorker::NotifyConnectionEstablished, this));
 }
 
 void
